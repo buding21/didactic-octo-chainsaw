@@ -1,0 +1,203 @@
+---
+title: "Global superstore customer analysis"
+author: "Lora YANG"
+date: '2022-04-05'
+output:
+  pdf_document: default
+  html_document: default
+---
+
+# **About Dataset**
+
+## Shopping online is currently the need of the hour. Because of this COVID, it's not easy to walk in a store randomly and buy anything you want. I this I am trying to understand a few things like
+
+
+## **Business task**
+
+## **Customers Analysis**
+
+### --Profile the customers based on their frequency of purchase - calculate frequency of          purchase for each customer
+
+### --Do the high frequent customers are contributing more revenue
+
+### --Are they also profitable - what is the profit margin across the buckets
+
+### --Which customer segment is most profitable in each year.
+
+### --How the customers are distributed across the countries
+
+## **prepare data**
+
+### **data download from Kaggle**
+
+### Global_superstore2.csv
+
+### Sort, filter and clean the Data use spreedsheet
+### trim the spaces, delete the columns not related with the analysis 
+
+## library the required packages
+
+```{r}
+library(tidyverse)
+library(skimr)
+library(janitor)
+library(lubridate)
+library(readr)
+library(ggplot2)
+library(dplyr)
+```
+
+
+## loading data
+
+```{r}
+superstore <- read_csv("Global_Superstore2.csv")
+```
+
+## **data process**
+
+## **clean data**
+
+```{r}
+cleaned_superstore <- superstore %>% clean_names()
+
+head(cleaned_superstore)
+```
+## **add columns**
+
+```{r}
+cleaned_superstore$day <- format(as.Date(cleaned_superstore$order_date, "%d-%m-%Y"), "%d")
+cleaned_superstore$month <- format(as.Date(cleaned_superstore$order_date,"%d-%m-%Y"), "%m")
+cleaned_superstore$year <- format(as.Date(cleaned_superstore$order_date, "%d-%m-%Y"),"%Y")
+```
+
+## **data analysis**
+
+## **frequency of purchase for each customer**
+
+```{r}
+cleaned_superstore_summary1 <- cleaned_superstore%>%group_by(customer_id, year) %>%
+  summarize(number_of_order_id=n()) %>%
+  arrange(desc(number_of_order_id))
+
+ccleaned_superstore_summary1 <- cleaned_superstore_summary1 %>% group_by(customer_id, year) %>%
+  summarize(average_number_of_order_id=mean(number_of_order_id))
+
+
+```
+```{r}
+head_ccleaned_superstore_summary1 <- head(ccleaned_superstore_summary1, n=50)
+
+```
+
+## **data visualization**
+
+```{r}
+ggplot(head_ccleaned_superstore_summary1)+
+  geom_jitter(mapping=aes(x=year, y=average_number_of_order_id, color=customer_id))+
+  labs(title="frequency of purchase ")
+
+```
+
+
+## calculate high frequent(set top 15 as high frequent) customers are contributing more customers
+
+```{r}
+cleaned_superstore_summary2 <- cleaned_superstore %>% 
+  group_by(customer_id, month) %>%
+  summarize(number_of_order_id=n(), sum_sales=sum(sales)) %>%
+  arrange(desc(sum_sales)) %>%
+  arrange(desc(number_of_order_id))
+```
+
+## **set high frequent customers as top 15 of customers**
+```{r}
+head_cleaned_superstore_summary2 <- head(cleaned_superstore_summary2, n=15)
+
+```
+## **data visualization**
+
+```{r}
+ggplot(data=head_cleaned_superstore_summary2)+
+  geom_col(mapping=aes(x=month, y=sum_sales, fill=customer_id))+
+  labs(title="high frequent customers contributing more revenue by month", caption="data from kaggle.com")
+```
+
+
+## **Calculate the profit margin group by customer id**
+
+```{r}
+cleaned_superstore_summary3 <- cleaned_superstore %>% 
+    group_by(customer_id, month) %>%
+   summarize(number_of_order_id=n(), sum_sales=sum(sales), profit_margin=(profit/sales)) %>%
+   arrange(desc(sum_sales)) %>%
+   arrange(desc(number_of_order_id)) %>%
+   arrange(desc(profit_margin))
+```
+
+```{r}
+head_cleaned_superstore_summary3 <- head(cleaned_superstore_summary3, n=15)
+
+```
+
+## **data visualization**
+   
+```{r}
+ggplot(data=head_cleaned_superstore_summary3)+
+  geom_col(mapping=aes(x=month, y=profit_margin, fill=customer_id))+
+  labs(title="profit margin by top 15 customer vs month", caption="data from kaggle.com")+
+  facet_wrap(month~customer_id)
+
+
+```
+
+
+## **calculate which customer segment is most profitable each year**
+
+```{r}
+cleaned_superstore_summary4 <- cleaned_superstore %>% 
+  group_by(segment, profit, year) %>%
+  summarize(number_of_order_id=n(), sum_profit=sum(profit), profit_margin=(profit/sales))%>%   arrange(desc(number_of_order_id)) %>%
+  arrange(desc(sum_profit))
+```
+```{r}
+head_cleaned_superstore_summary4 <- head(cleaned_superstore_summary4, n=15)
+
+```
+
+          
+## **data visualization**
+
+```{r}
+ggplot(data=head_cleaned_superstore_summary4)+
+  geom_col(mapping=aes(x=year, y=sum_profit, fill=segment))+
+  labs(title="which customer segment is most profitable in each year", caption="data from kaggle.com")
+  
+```
+
+## **how customers are distributed accross the countries**
+## ![plot this way](/cloud/project/image.png)
+
+
+
+
+  
+  
+  
+  
+
+
+  
+  
+
+  
+
+  
+  
+
+
+
+  
+  
+  
+  
